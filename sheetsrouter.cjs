@@ -3,7 +3,7 @@ const router = express.Router();
 const getSheetsService = require('./getsheetsservice.cjs');
 
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
-const SHEET_NAME = 'Sheet1!A2:J'; // change if your sheet tab is named differently
+const SHEET_NAME ="Cars"; // change if your sheet tab is named differently
 
 // POST /api/add-row
 router.post('/add-row', async (req, res) => {
