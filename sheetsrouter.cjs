@@ -1,9 +1,11 @@
+// sheetsrouter.cjs
 const express = require('express');
 const router = express.Router();
 const getSheetsService = require('./getsheetsservice.cjs');
 
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
-const SHEET_NAME ="Cardata"; // change if your sheet tab is named differently
+const SHEET_TAB = "Sheet1"; // Match the tab name in your spreadsheet
+const SHEET_RANGE = `${SHEET_TAB}!A2:J`;
 
 // POST /api/add-row
 router.post('/add-row', async (req, res) => {
@@ -13,31 +15,30 @@ router.post('/add-row', async (req, res) => {
     const {
       Name,
       MobileNumber,
-      carNumber,
-      cngKitNumber,
-      cngKitModelName,
-      fittingDate,
-      lastServiceDate,
-      nextServiceDate,
+      CarNumber,
+      CNGKitNumber,
+      CNGKitModelNa,
+      FittingDate,
+      LastServiceDate,
+      serviceDate,
       testingDate
     } = req.body;
 
     await sheets.spreadsheets.values.append({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${SHEET_NAME}!A2:J`,
+      range: SHEET_RANGE,
       valueInputOption: 'USER_ENTERED',
       requestBody: {
         values: [[
           Name,
           MobileNumber,
-          carNumber,
-          cngKitNumber,
-          cngKitModelName,
-          fittingDate,
-          lastServiceDate,
-          nextServiceDate,
-          testingDate,
-          new Date().toLocaleString() // optional timestamp
+          CarNumber,
+          CNGKitNumber,
+          CNGKitModelNa,
+          FittingDate,
+          LastServiceDate,
+          serviceDate,
+          testingDate
         ]]
       }
     });
@@ -60,7 +61,7 @@ router.get('/cars', async (req, res) => {
     const sheets = await getSheetsService();
     const result = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${SHEET_NAME}!A2:J`
+      range: SHEET_RANGE
     });
 
     const rows = result.data.values || [];
@@ -68,14 +69,14 @@ router.get('/cars', async (req, res) => {
     const matchedCars = rows.map((row, index) => ({
       Name: row[0] || '',
       MobileNumber: row[1] || '',
-      carNumber: row[2] || '',
-      cngKitNumber: row[3] || '',
-      cngKitModelName: row[4] || '',
-      fittingDate: row[5] || '',
-      lastServiceDate: row[6] || '',
-      nextServiceDate: row[7] || '',
+      CarNumber: row[2] || '',
+      CNGKitNumber: row[3] || '',
+      CNGKitModelNa: row[4] || '',
+      FittingDate: row[5] || '',
+      LastServiceDate: row[6] || '',
+      serviceDate: row[7] || '',
       testingDate: row[8] || '',
-      rowNumber: index + 2 // for deleting (1-based index + header row)
+      rowNumber: index + 2 // Account for header row
     })).filter(car => car.MobileNumber === mobile);
 
     res.status(200).json(matchedCars);
@@ -98,16 +99,18 @@ router.delete('/cars/:rowNumber', async (req, res) => {
     await sheets.spreadsheets.batchUpdate({
       spreadsheetId: SPREADSHEET_ID,
       requestBody: {
-        requests: [{
-          deleteDimension: {
-            range: {
-              sheetId: 0, // ⚠️ usually Sheet1 is 0 — change if yours differs
-              dimension: 'ROWS',
-              startIndex: rowNumber - 1,
-              endIndex: rowNumber
+        requests: [
+          {
+            deleteDimension: {
+              range: {
+                sheetId: 0, // Assuming it's the first sheet (Sheet1)
+                dimension: 'ROWS',
+                startIndex: rowNumber - 1,
+                endIndex: rowNumber
+              }
             }
           }
-        }]
+        ]
       }
     });
 
