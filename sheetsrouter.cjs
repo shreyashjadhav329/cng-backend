@@ -4,7 +4,7 @@ const router = express.Router();
 const getSheetsService = require('./getsheetsservice.cjs');
 
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
-const SHEET_TAB = "Sheet1"; // Match the tab name in your spreadsheet
+const SHEET_TAB = "Sheet1";
 const SHEET_RANGE = `${SHEET_TAB}!A2:J`;
 
 // POST /api/add-row
@@ -15,11 +15,11 @@ router.post('/add-row', async (req, res) => {
     const {
       Name,
       MobileNumber,
-      CarNumber,
-      CNGKitNumber,
-      CNGKitModelNa,
-      FittingDate,
-      LastServiceDate,
+      carNumber,
+      cngKitNumber,
+      cngKitModelName,
+      fittingDate,
+      lastServiceDate,
       serviceDate,
       testingDate
     } = req.body;
@@ -32,13 +32,13 @@ router.post('/add-row', async (req, res) => {
         values: [[
           Name,
           MobileNumber,
-          CarNumber,
-          CNGKitNumber,
-          CNGKitModelNa,
-          FittingDate,
-          LastServiceDate,
-          serviceDate,
-          testingDate
+          carNumber,
+          cngKitNumber,
+          cngKitModelName,
+          fittingDate,
+          lastServiceDate,
+          serviceDate || '',
+          testingDate || ''
         ]]
       }
     });
@@ -46,7 +46,7 @@ router.post('/add-row', async (req, res) => {
     res.status(200).json({ message: 'Row added successfully' });
   } catch (err) {
     console.error('❌ Error adding row:', err);
-    res.status(500).json({ error: 'Failed to add row' });
+    res.status(500).json({ error: 'Failed to add row', message: err.message });
   }
 });
 
@@ -59,6 +59,7 @@ router.get('/cars', async (req, res) => {
     }
 
     const sheets = await getSheetsService();
+
     const result = await sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
       range: SHEET_RANGE
@@ -69,20 +70,20 @@ router.get('/cars', async (req, res) => {
     const matchedCars = rows.map((row, index) => ({
       Name: row[0] || '',
       MobileNumber: row[1] || '',
-      CarNumber: row[2] || '',
-      CNGKitNumber: row[3] || '',
-      CNGKitModelNa: row[4] || '',
-      FittingDate: row[5] || '',
-      LastServiceDate: row[6] || '',
-      serviceDate: row[7] || '',
+      carNumber: row[2] || '',
+      cngKitNumber: row[3] || '',
+      cngKitModelName: row[4] || '',
+      fittingDate: row[5] || '',
+      lastServiceDate: row[6] || '',
+      nextServiceDate: row[7] || '',
       testingDate: row[8] || '',
-      rowNumber: index + 2 // Account for header row
+      rowNumber: index + 2
     })).filter(car => car.MobileNumber === mobile);
 
     res.status(200).json(matchedCars);
   } catch (err) {
     console.error('❌ Error fetching cars:', err);
-    res.status(500).json({ error: 'Failed to fetch car data' });
+    res.status(500).json({ error: 'Failed to fetch car data', message: err.message });
   }
 });
 
@@ -103,7 +104,7 @@ router.delete('/cars/:rowNumber', async (req, res) => {
           {
             deleteDimension: {
               range: {
-                sheetId: 0, // Assuming it's the first sheet (Sheet1)
+                sheetId: 0, // Default first sheet (Sheet1)
                 dimension: 'ROWS',
                 startIndex: rowNumber - 1,
                 endIndex: rowNumber
@@ -117,7 +118,7 @@ router.delete('/cars/:rowNumber', async (req, res) => {
     res.status(200).json({ message: 'Row deleted successfully' });
   } catch (err) {
     console.error('❌ Error deleting car:', err);
-    res.status(500).json({ error: 'Failed to delete car' });
+    res.status(500).json({ error: 'Failed to delete car', message: err.message });
   }
 });
 
