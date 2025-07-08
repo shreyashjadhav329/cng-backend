@@ -1,11 +1,10 @@
-// sheetsrouter.cjs
 const express = require('express');
 const router = express.Router();
 const getSheetsService = require('./getsheetsservice.cjs');
 
 const SPREADSHEET_ID = process.env.SPREADSHEET_ID;
 const SHEET_TAB = "Sheet1";
-const SHEET_RANGE = `${SHEET_TAB}!A2:J`;
+const SHEET_RANGE = `${SHEET_TAB}!A2:I`; // ✅ Updated to match columns A to I
 
 // POST /api/add-row
 router.post('/add-row', async (req, res) => {
